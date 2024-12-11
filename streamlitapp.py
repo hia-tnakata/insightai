@@ -1,13 +1,3 @@
-#pip install poetry
-##need to run poetry init to create pyproject.toml file
-#poetry add pandasai
-
-#pip install streamlit
-
-#pip install pip install numpy==1.26.4
-#pip install pandasai[seaborn]
-
-
 import matplotlib
 import streamlit as st
 import pandas as pd
@@ -18,7 +8,6 @@ from pandasai.llm import BambooLLM
 from pandasai.responses.response_parser import ResponseParser
 import os
 os.environ['PANDASAI_API_KEY'] = '$2a$10$zYXEMaIw0fLSjGSq3MrVDuNV9HQ85BfV4O5s5fxSBoCrediuGQcg2'
-
 
 
 class OutputParser(ResponseParser):
@@ -35,7 +24,7 @@ class OutputParser(ResponseParser):
 
 
 def setup():
-    st.header("Chat with your small and large datasets!", anchor=False, divider="red")
+    st.header("Chat with your small and large datasets!", anchor=False, divider="green")
 
     hide_menu_style = """
             <style>
@@ -45,14 +34,19 @@ def setup():
     st.markdown(hide_menu_style, unsafe_allow_html=True)
 
 
-def get_tasks():
-    st.sidebar.header("Select a task", divider="rainbow")
-    task = st.sidebar.radio("Choose one:",
-                            ("Load from local drive, <200MB",
-                             "Load from local drive, 200MB+",
-                             "Yahoo Finance")
-                            )
-    return task
+def get_data_source():
+    # Updated the header to "Select a data source" and changed divider color
+    st.sidebar.header("Select a data source", divider="green")
+    # Eventually, this could be a list of tables from your MySQL database.
+    # For now, we retain the radio input but renamed it accordingly.
+    data_source = st.sidebar.radio("Choose a data source:",
+                                   (
+                                     "Load from local drive, <200MB",
+                                     "Load from local drive, 200MB+",
+                                     "Yahoo Finance"
+                                   )
+                                  )
+    return data_source
 
 
 def main():
@@ -61,9 +55,9 @@ def main():
        3. Yahoo Finance
     """
     setup()
-    task = get_tasks()
+    data_source = get_data_source()
 
-    if task == "Load from local drive, <200MB":
+    if data_source == "Load from local drive, <200MB":
         dataset = st.file_uploader("Upload your CSV or XLSX file", type=['csv', 'xlsx'])
         if not dataset:
             st.stop()
@@ -96,7 +90,7 @@ def main():
             st.write("🧞‍♂️ Under the hood, the code that was executed:")
             st.code(sdf.last_code_executed)
 
-    if task == "Load from local drive, 200MB+":
+    if data_source == "Load from local drive, 200MB+":
         filename = st.text_input("Enter your file path including filename, e.g. /users/xyz/abc.csv (CSV files only)")
         if not filename:
             st.stop()
@@ -129,7 +123,7 @@ def main():
             st.write("🧞‍♂️ Under the hood, the code that was executed:")
             st.code(sdf.last_code_executed)
 
-    if task == "Yahoo Finance":
+    if data_source == "Yahoo Finance":
         stock_symbol = st.text_input("Enter a stock symbol, e.g. MSFT.")
         if not stock_symbol:
             st.stop()
