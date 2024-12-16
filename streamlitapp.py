@@ -32,36 +32,39 @@ class OutputParser(ResponseParser):
         return
 
 def setup():
-    st.header("Chat with your MySQL Tables!", anchor=False, divider="green")
-    hide_menu_style = """
-            <style>
-            #MainMenu {visibility: hidden;}
-            </style>
-            """
-    st.markdown(hide_menu_style, unsafe_allow_html=True)
+    custom_css = """
+    <style>
+    #MainMenu {visibility: hidden;}
+    header button {
+        display: none !important;
+    }
+    </style>
+    """
+    st.markdown(custom_css, unsafe_allow_html=True)
 
 def get_mysql_engine():
-    # Create a SQLAlchemy engine with given credentials
     engine_url = f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DATABASE}"
     engine = sqlalchemy.create_engine(engine_url)
     return engine
 
 def fetch_table_list(engine):
-    # Fetch a list of all tables from the database
     insp = sqlalchemy.inspect(engine)
     tables = insp.get_table_names()
     return tables
 
 def main():
     """
-    1. Setup page
+    1. Setup page (hide menu and buttons)
     2. Connect to MySQL
     3. Select table
     4. Provide optional column descriptors
     5. Query the table with LLM
     """
     setup()
-    st.sidebar.header("Select a table from MySQL", divider="green")
+    
+    # Display the logo at the top of the sidebar
+    st.sidebar.image("greenlogo.png",use_container_width=True)
+    st.sidebar.header("Select a table", divider="green")
 
     engine = get_mysql_engine()
     tables = fetch_table_list(engine)
@@ -70,26 +73,20 @@ def main():
         st.write("No tables found in the database.")
         st.stop()
 
-    selected_table = st.sidebar.selectbox("Choose a table:", options=tables)
-
+    selected_table = st.sidebar.selectbox("", options=tables)
     if not selected_table:
         st.stop()
 
-    # Load the selected table into a DataFrame
     df = pd.read_sql_table(selected_table, con=engine)
     st.write("Data Preview:")
     st.dataframe(df.head())
 
-    # Ask if user wants to add column descriptions
-    col_desc = st.radio("Do you want to provide column descriptors?",
-                        ("Yes", "No")
-                       )
+    col_desc = st.radio("Do you want to provide column descriptors?", ("Yes", "No"))
     if col_desc == "Yes":
         addon = st.text_input("Enter your column description, e.g. 'col1': 'unique id'")
     else:
         addon = "None"
 
-    # Once descriptions are provided (or not), prepare LLM & PandasAI
     if addon:
         llm = BambooLLM()
         connector = PandasConnector({"original_df": df}, field_descriptions=addon)
@@ -110,6 +107,5 @@ def main():
         st.code(sdf.last_code_executed)
 
 if __name__ == '__main__':
-    # Ensure no interactive matplotlib backend issues
     matplotlib.use("Agg", force=True)
     main()
