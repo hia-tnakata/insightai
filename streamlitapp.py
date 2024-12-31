@@ -90,25 +90,32 @@ def main():
         connector,
         {
             "enable_cache": False,
-            "system_prompt": (
-                "You are a data science assistant. Always use seaborn for all plots. "
-                "At the end of every plot, call `plt.tight_layout(pad=5.0)` so the chart "
-                "titles and axis labels are not cut off."
-            )
+            "conversational": True
         },
         config={
             "llm": llm,
             "conversational": True,
-            "response_parser": OutputParser
+            "response_parser": OutputParser,
+            "safe_mode": False
         }
     )
 
-    prompt = st.text_input("Enter your question")
-    if not prompt:
+    # The user enters just their question
+    user_input = st.text_input("Enter your question")
+
+    if not user_input:
         st.stop()
 
+    # Always prepend your instruction to the user prompt
+    instruction = (
+        "make the chart 20 percent larger"
+        #"Use seaborn for all plots. "
+        #"At the end of every plot, call `plt.tight_layout(pad=5.0)` so labels aren't cut off.\n\n"
+    )
+    combined_prompt = user_input + instruction
+
     st.write("Response")
-    response = sdf.chat(prompt)
+    response = sdf.chat(combined_prompt)
 
 if __name__ == '__main__':
     matplotlib.use("Agg", force=True)
