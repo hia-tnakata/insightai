@@ -7,12 +7,14 @@ from pandasai.llm import OpenAI
 from pandasai.responses.response_parser import ResponseParser
 import os
 import matplotlib
+from dotenv import load_dotenv
+load_dotenv()
 
-# If you wish to store your OpenAI key in an environment variable called OPENAI_API_KEY:
-# os.environ["OPENAI_API_KEY"] = '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'
+#open ai key
+my_key = os.environ.get("OPENAI_API_KEY")
 
 
-# Given MySQL Credentials
+#MySQL Credentials
 MYSQL_HOST = "localhost"
 MYSQL_PORT = 3306
 MYSQL_USER = "root"
@@ -82,14 +84,21 @@ def main():
     st.dataframe(df.head())
 
     # Use the OpenAI LLM now
-    llm = OpenAI(api_token="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")  # Or omit api_token if set in your environment
+    llm = OpenAI(api_token=my_key)  # Or omit api_token if set in your environment
     connector = PandasConnector({"original_df": df})
     sdf = SmartDataframe(
-        connector, 
-        {"enable_cache": False}, 
+        connector,
+        {
+            "enable_cache": False,
+            "system_prompt": (
+                "You are a data science assistant. Always use seaborn for all plots. "
+                "At the end of every plot, call `plt.tight_layout(pad=5.0)` so the chart "
+                "titles and axis labels are not cut off."
+            )
+        },
         config={
             "llm": llm,
-            "conversational": False,
+            "conversational": True,
             "response_parser": OutputParser
         }
     )
