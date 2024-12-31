@@ -3,13 +3,14 @@ import pandas as pd
 import sqlalchemy
 from pandasai import SmartDataframe
 from pandasai.connectors import PandasConnector
-from pandasai.llm import BambooLLM
+from pandasai.llm import OpenAI
 from pandasai.responses.response_parser import ResponseParser
 import os
 import matplotlib
 
-# Set your PandasAI API Key
-os.environ['PANDASAI_API_KEY'] = '$2a$10$zYXEMaIw0fLSjGSq3MrVDuNV9HQ85BfV4O5s5fxSBoCrediuGQcg2'
+# If you wish to store your OpenAI key in an environment variable called OPENAI_API_KEY:
+# os.environ["OPENAI_API_KEY"] = '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'
+
 
 # Given MySQL Credentials
 MYSQL_HOST = "localhost"
@@ -80,14 +81,18 @@ def main():
     st.write("Data Preview:")
     st.dataframe(df.head())
 
-    # Use the BambooLLM and create a SmartDataframe (without field_descriptions)
-    llm = BambooLLM()
+    # Use the OpenAI LLM now
+    llm = OpenAI(api_token="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")  # Or omit api_token if set in your environment
     connector = PandasConnector({"original_df": df})
-    sdf = SmartDataframe(connector, {"enable_cache": False}, config={
-        "llm": llm,
-        "conversational": False,
-        "response_parser": OutputParser
-    })
+    sdf = SmartDataframe(
+        connector, 
+        {"enable_cache": False}, 
+        config={
+            "llm": llm,
+            "conversational": False,
+            "response_parser": OutputParser
+        }
+    )
 
     prompt = st.text_input("Enter your question")
     if not prompt:
