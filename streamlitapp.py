@@ -57,13 +57,12 @@ def main():
     1. Setup page (hide menu and buttons)
     2. Connect to MySQL
     3. Select table
-    4. Provide optional column descriptors
-    5. Query the table with LLM
+    4. Query the table with LLM
     """
     setup()
     
     # Display the logo at the top of the sidebar
-    st.sidebar.image("greenlogo.png",use_container_width=True)
+    st.sidebar.image("greenlogo.png", use_container_width=True)
     st.sidebar.header("Select a table", divider="green")
 
     engine = get_mysql_engine()
@@ -81,30 +80,21 @@ def main():
     st.write("Data Preview:")
     st.dataframe(df.head())
 
-    col_desc = st.radio("Do you want to provide column descriptors?", ("Yes", "No"))
-    if col_desc == "Yes":
-        addon = st.text_input("Enter your column description, e.g. 'col1': 'unique id'")
-    else:
-        addon = "None"
+    # Use the BambooLLM and create a SmartDataframe (without field_descriptions)
+    llm = BambooLLM()
+    connector = PandasConnector({"original_df": df})
+    sdf = SmartDataframe(connector, {"enable_cache": False}, config={
+        "llm": llm,
+        "conversational": False,
+        "response_parser": OutputParser
+    })
 
-    if addon:
-        llm = BambooLLM()
-        connector = PandasConnector({"original_df": df}, field_descriptions=addon)
-        sdf = SmartDataframe(connector, {"enable_cache": False}, config={
-            "llm": llm,
-            "conversational": False,
-            "response_parser": OutputParser
-        })
+    prompt = st.text_input("Enter your question")
+    if not prompt:
+        st.stop()
 
-        prompt = st.text_input("Enter your question/prompt.")
-        if not prompt:
-            st.stop()
-
-        st.write("Response")
-        response = sdf.chat(prompt)
-        st.divider()
-        st.write("🧞‍♂️ Under the hood, the code that was executed:")
-        st.code(sdf.last_code_executed)
+    st.write("Response")
+    response = sdf.chat(prompt)
 
 if __name__ == '__main__':
     matplotlib.use("Agg", force=True)
